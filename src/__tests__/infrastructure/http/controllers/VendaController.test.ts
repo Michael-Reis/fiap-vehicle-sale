@@ -6,6 +6,7 @@ import {
   validarWebhookPagamento 
 } from '../../../../infrastructure/http/controllers/VendaController';
 import { StatusVenda, MetodoPagamento } from '../../../../domain/entities/Venda';
+import { VendaService } from '../../../../domain/services/VendaService';
 
 // Mock das dependências principais
 jest.mock('../../../../infrastructure/repositories/MySQLVendaRepository');
@@ -304,6 +305,60 @@ describe('VendaController', () => {
       expect(webhookResult).toBeInstanceOf(Promise);
       expect(pendentesResult).toBeInstanceOf(Promise);
     });
+
+    it('deve tentar executar método criarVenda com validação de erro', async () => {
+      // Mock de validation result com erro
+      const { validationResult } = require('express-validator');
+      
+      const mockValidationResultWithError = jest.fn().mockReturnValue({
+        isEmpty: jest.fn().mockReturnValue(false),
+        array: jest.fn().mockReturnValue([
+          { msg: 'Campo obrigatório', param: 'veiculoId' }
+        ])
+      });
+
+      (validationResult as jest.Mock).mockImplementation(mockValidationResultWithError);
+
+      mockRequest.body = {
+        veiculoId: '',
+        cpfComprador: '12345678901',
+        valorPago: 50000,
+        metodoPagamento: 'pix'
+      };
+
+      await VendaController.criarVenda(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Dados inválidos',
+        errors: [{ msg: 'Campo obrigatório', param: 'veiculoId' }]
+      });
+    });
+
+    it('deve tentar executar método buscarVendaPorId com validação de erro', async () => {
+      const { validationResult } = require('express-validator');
+      
+      const mockValidationResultWithError = jest.fn().mockReturnValue({
+        isEmpty: jest.fn().mockReturnValue(false),
+        array: jest.fn().mockReturnValue([
+          { msg: 'ID inválido', param: 'id' }
+        ])
+      });
+
+      (validationResult as jest.Mock).mockImplementation(mockValidationResultWithError);
+
+      mockRequest.params = { id: 'invalid-id' };
+
+      await VendaController.buscarVendaPorId(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'ID inválido',
+        errors: [{ msg: 'ID inválido', param: 'id' }]
+      });
+    });
   });
 
   describe('Error Handling', () => {
@@ -343,6 +398,194 @@ describe('VendaController', () => {
       expect(result.array()).toHaveLength(4);
       expect(result.array().map((e: any) => e.param)).toContain('veiculoId');
       expect(result.array().map((e: any) => e.param)).toContain('cpfComprador');
+    });
+  });
+
+  describe('Branch Coverage - Error Handling', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('deve testar branch de erro específico CPF inválido no criarVenda', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => true,
+        array: () => []
+      });
+
+      // Spy no VendaService.prototype.criarVenda
+      const criarVendaSpy = jest.spyOn(VendaService.prototype, 'criarVenda').mockRejectedValue(new Error('CPF inválido'));
+
+      mockRequest.body = {
+        veiculoId: 'veiculo-123',
+        cpfComprador: '123',
+        valorPago: 50000,
+        metodoPagamento: 'pix'
+      };
+
+      await VendaController.criarVenda(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'CPF inválido'
+      });
+      expect(criarVendaSpy).toHaveBeenCalled();
+    });
+
+    it('deve testar branch de erro específico Valor pago no criarVenda', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => true,
+        array: () => []
+      });
+
+      // Spy no VendaService.prototype.criarVenda
+      const criarVendaSpy = jest.spyOn(VendaService.prototype, 'criarVenda').mockRejectedValue(new Error('Valor pago deve ser maior que zero'));
+
+      mockRequest.body = {
+        veiculoId: 'veiculo-123',
+        cpfComprador: '12345678901',
+        valorPago: 0,
+        metodoPagamento: 'pix'
+      };
+
+      await VendaController.criarVenda(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Valor pago deve ser maior que zero'
+      });
+      expect(criarVendaSpy).toHaveBeenCalled();
+    });
+
+    it('deve testar branch de erro Veículo não encontrado no criarVenda', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => true,
+        array: () => []
+      });
+
+      // Spy no VendaService.prototype.criarVenda
+      const criarVendaSpy = jest.spyOn(VendaService.prototype, 'criarVenda').mockRejectedValue(new Error('Veículo não encontrado'));
+
+      mockRequest.body = {
+        veiculoId: 'veiculo-inexistente',
+        cpfComprador: '12345678901',
+        valorPago: 50000,
+        metodoPagamento: 'pix'
+      };
+
+      await VendaController.criarVenda(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Veículo não encontrado'
+      });
+      expect(criarVendaSpy).toHaveBeenCalled();
+    });
+
+    it('deve testar branch de erro Veículo já foi vendido no criarVenda', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => true,
+        array: () => []
+      });
+
+      // Spy no VendaService.prototype.criarVenda
+      const criarVendaSpy = jest.spyOn(VendaService.prototype, 'criarVenda').mockRejectedValue(new Error('Veículo já foi vendido'));
+
+      mockRequest.body = {
+        veiculoId: 'veiculo-vendido',
+        cpfComprador: '12345678901',
+        valorPago: 50000,
+        metodoPagamento: 'pix'
+      };
+
+      await VendaController.criarVenda(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Veículo já foi vendido'
+      });
+      expect(criarVendaSpy).toHaveBeenCalled();
+    });
+
+    it('deve testar branch usuário não autenticado no listarVendas', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => true,
+        array: () => []
+      });
+
+      mockRequest.user = undefined;
+
+      await VendaController.listarVendas(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Usuário não autenticado'
+      });
+    });
+
+    it('deve testar branch usuário comum sem CPF no listarVendas', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => true,
+        array: () => []
+      });
+
+      mockRequest.user = { id: '1', tipo: 'CLIENTE' }; // sem CPF
+
+      await VendaController.listarVendas(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'CPF do usuário não encontrado no token'
+      });
+    });
+
+    it('deve testar branch de validation error no buscarVendaPorId', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => false,
+        array: () => [{ msg: 'ID inválido' }]
+      });
+
+      await VendaController.buscarVendaPorId(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'ID inválido',
+        errors: [{ msg: 'ID inválido' }]
+      });
+    });
+
+    it('deve testar branch de validation error no processarWebhookPagamento', async () => {
+      const mockValidationResult = require('express-validator').validationResult;
+      mockValidationResult.mockReturnValue({
+        isEmpty: () => false,
+        array: () => [{ msg: 'Dados inválidos' }]
+      });
+
+      await VendaController.processarWebhookPagamento(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Dados do webhook inválidos',
+        errors: [{ msg: 'Dados inválidos' }]
+      });
     });
   });
 

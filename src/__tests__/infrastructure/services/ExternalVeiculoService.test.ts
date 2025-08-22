@@ -605,6 +605,81 @@ describe('ExternalVeiculoService', () => {
         message: 'Erro interno do servidor'
       });
     });
+
+    it('deve retornar erro quando token é inválido (401)', async () => {
+      const errorResponse = {
+        response: {
+          status: 401,
+          data: {
+            message: 'Token inválido'
+          }
+        }
+      };
+
+      mockedAxios.get.mockRejectedValue(errorResponse);
+
+      const result = await service.buscarVeiculoPorId('1', 'invalid-token');
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Token de acesso inválido'
+      });
+    });
+
+    it('deve retornar erro quando acesso é negado (403)', async () => {
+      const errorResponse = {
+        response: {
+          status: 403,
+          data: {
+            message: 'Acesso negado'
+          }
+        }
+      };
+
+      mockedAxios.get.mockRejectedValue(errorResponse);
+
+      const result = await service.buscarVeiculoPorId('1', 'restricted-token');
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Acesso negado'
+      });
+    });
+
+    it('deve retornar erro quando API retorna success false', async () => {
+      const mockResponse = {
+        data: {
+          success: false,
+          message: 'Veículo indisponível'
+        }
+      };
+
+      mockedAxios.get.mockResolvedValue(mockResponse);
+
+      const result = await service.buscarVeiculoPorId('1');
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Veículo indisponível'
+      });
+    });
+
+    it('deve retornar erro quando API retorna success false sem message', async () => {
+      const mockResponse = {
+        data: {
+          success: false
+        }
+      };
+
+      mockedAxios.get.mockResolvedValue(mockResponse);
+
+      const result = await service.buscarVeiculoPorId('1');
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Erro ao buscar veículo'
+      });
+    });
   });
 
   describe('listarVeiculos', () => {
