@@ -714,4 +714,133 @@ describe('VendaController', () => {
       expect(Object.values(StatusVenda)).toContain(paginationParams.status);
     });
   });
+
+  // Testes adicionais para cobrir cenários de erro
+  describe('Cenários de erro adicionais', () => {
+    it('deve retornar erro 500 ao buscar venda por ID com erro inesperado', async () => {
+      const vendaId = 'venda-123';
+      mockRequest.params = { id: vendaId };
+      mockRequest.user = { cpf: '12345678901', tipo: 'CLIENTE' };
+
+      // Mock do service para retornar erro
+      const mockVendaService = VendaService as jest.MockedClass<typeof VendaService>;
+      mockVendaService.prototype.buscarVendaPorId.mockRejectedValue(new Error('Erro inesperado'));
+
+      await VendaController.buscarVendaPorId(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    });
+
+    it('deve retornar erro 400 ao listar vendas com CPF inválido', async () => {
+      mockRequest.query = {};
+      mockRequest.user = { cpf: '12345678901', tipo: 'CLIENTE' };
+
+      // Mock do service para retornar erro de CPF inválido
+      const mockVendaService = VendaService as jest.MockedClass<typeof VendaService>;
+      mockVendaService.prototype.buscarVendasPorCpf.mockRejectedValue(new Error('CPF inválido'));
+
+      await VendaController.listarVendas(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'CPF inválido'
+      });
+    });
+
+    it('deve retornar erro 500 ao listar vendas com erro inesperado', async () => {
+      mockRequest.query = {};
+      mockRequest.user = { cpf: '12345678901', tipo: 'CLIENTE' };
+
+      // Mock do service para retornar erro inesperado
+      const mockVendaService = VendaService as jest.MockedClass<typeof VendaService>;
+      mockVendaService.prototype.buscarVendasPorCpf.mockRejectedValue(new Error('Erro inesperado'));
+
+      await VendaController.listarVendas(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    });
+
+    it('deve filtrar vendas por veículo para usuário comum', async () => {
+      const veiculoId = 'veiculo-123';
+      mockRequest.query = { veiculoId };
+      mockRequest.user = { cpf: '12345678901', tipo: 'CLIENTE' };
+
+      const mockVendasVeiculo = [
+        {
+          id: 'venda-1',
+          cpfComprador: '12345678901',
+          // outras propriedades
+        },
+        {
+          id: 'venda-2', 
+          cpfComprador: '98765432101',
+          // outras propriedades
+        }
+      ];
+
+      const mockVendaService = VendaService as jest.MockedClass<typeof VendaService>;
+      mockVendaService.prototype.buscarVendasPorVeiculo.mockResolvedValue(mockVendasVeiculo as any);
+
+      await VendaController.listarVendas(mockRequest, mockResponse);
+
+      expect(mockVendaService.prototype.buscarVendasPorVeiculo).toHaveBeenCalledWith(veiculoId);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        data: [mockVendasVeiculo[0]], // Só a venda do usuário
+        total: 1
+      });
+    });
+
+    it('deve retornar erro 500 ao processar webhook com erro inesperado', async () => {
+      mockRequest.body = {
+        eventType: 'payment.confirmed',
+        vendaId: 'venda-123',
+        statusPagamento: 'CONFIRMADO'
+      };
+
+      const mockVendaService = VendaService as jest.MockedClass<typeof VendaService>;
+      mockVendaService.prototype.processarPagamento.mockRejectedValue(new Error('Erro inesperado'));
+
+      await VendaController.processarWebhookPagamento(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    });
+
+    it('deve retornar erro 500 ao criar venda com erro inesperado', async () => {
+      mockRequest.body = {
+        veiculoId: 'veiculo-123',
+        cpfComprador: '12345678901',
+        nomeComprador: 'João Silva',
+        telefoneComprador: '11999999999',
+        enderecoComprador: 'Rua A, 123',
+        preco: 50000,
+        metodoPagamento: MetodoPagamento.PIX,
+        dataVenda: new Date().toISOString()
+      };
+
+      const mockVendaService = VendaService as jest.MockedClass<typeof VendaService>;
+      mockVendaService.prototype.criarVenda.mockRejectedValue(new Error('Erro inesperado'));
+
+      await VendaController.criarVenda(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    });
+  });
 });
