@@ -7,6 +7,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
 import authRoutes from './infrastructure/http/routes/authRoutes';
+import veiculoRoutes from './infrastructure/http/routes/veiculoRoutes';
 
 // Configurar variáveis de ambiente
 dotenv.config();
@@ -88,6 +89,7 @@ app.get('/health', (req, res) => {
 
 // Rotas da API
 app.use('/api/auth', authRoutes);
+app.use('/api/veiculos', veiculoRoutes);
 
 // Middleware de tratamento de rotas não encontradas
 app.use('*', (req, res) => {

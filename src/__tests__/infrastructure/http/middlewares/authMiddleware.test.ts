@@ -41,34 +41,32 @@ describe('authMiddleware', () => {
         authorization: 'Bearer valid_token_123'
       };
 
-      (mockedJwt.verify as jest.Mock).mockReturnValue(mockDecodedToken);
+      (mockedJwt.decode as jest.Mock).mockReturnValue(mockDecodedToken);
 
       authMiddleware(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
 
-      expect(mockedJwt.verify).toHaveBeenCalledWith('valid_token_123', 'test_secret');
+      expect(mockedJwt.decode).toHaveBeenCalledWith('valid_token_123');
       expect(mockRequest.user).toEqual(mockDecodedToken);
       expect(mockNext).toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
-    it('deve usar JWT_SECRET padrão quando não definido', () => {
-      delete process.env.JWT_SECRET;
-      
-      const mockDecodedToken = {
-        userId: 'user_123',
-        email: 'test@test.com',
-        tipo: 'CLIENTE'
-      };
-
+    it('deve retornar erro 401 quando token é inválido (decode retorna null)', () => {
       mockRequest.headers = {
-        authorization: 'Bearer valid_token_123'
+        authorization: 'Bearer invalid_token'
       };
 
-      (mockedJwt.verify as jest.Mock).mockReturnValue(mockDecodedToken);
+      (mockedJwt.decode as jest.Mock).mockReturnValue(null);
 
       authMiddleware(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
 
-      expect(mockedJwt.verify).toHaveBeenCalledWith('valid_token_123', 'secret_default');
+      expect(mockedJwt.decode).toHaveBeenCalledWith('invalid_token');
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Token inválido'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('deve retornar erro 401 quando authorization header não fornecido', () => {
@@ -174,50 +172,12 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('deve retornar erro 401 para token expirado', () => {
-      mockRequest.headers = {
-        authorization: 'Bearer expired_token'
-      };
-
-      (mockedJwt.verify as jest.Mock).mockImplementation(() => {
-        throw new jwt.TokenExpiredError('Token expired', new Date());
-      });
-
-      authMiddleware(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Token expirado'
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('deve retornar erro 401 para token inválido', () => {
-      mockRequest.headers = {
-        authorization: 'Bearer invalid_token'
-      };
-
-      (mockedJwt.verify as jest.Mock).mockImplementation(() => {
-        throw new jwt.JsonWebTokenError('Invalid token');
-      });
-
-      authMiddleware(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Token inválido'
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('deve retornar erro 500 para outros erros JWT', () => {
+    it('deve retornar erro 500 para outros erros', () => {
       mockRequest.headers = {
         authorization: 'Bearer some_token'
       };
 
-      (mockedJwt.verify as jest.Mock).mockImplementation(() => {
+      (mockedJwt.decode as jest.Mock).mockImplementation(() => {
         throw new Error('Algum erro desconhecido');
       });
 

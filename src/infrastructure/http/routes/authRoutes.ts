@@ -131,39 +131,4 @@ router.post('/login', (req, res) => authController.login(req, res));
  */
 router.post('/registrar', (req, res) => authController.registrar(req, res));
 
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     tags: [Autenticação]
- *     summary: Obter dados do usuário autenticado
- *     description: Retorna os dados do usuário logado
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Dados do usuário
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 user:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     tipo:
- *                       type: string
- *       401:
- *         description: Token inválido ou não fornecido
- *       500:
- *         description: Erro interno do servidor
- */
-router.get('/me', authMiddleware, (req, res) => authController.me(req, res));
-
 export default router;
