@@ -44,6 +44,14 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
 
     const decoded = jwt.decode(token) as any;
 
+    if (!decoded) {
+      res.status(401).json({ 
+        success: false,
+        message: 'Token inválido' 
+      });
+      return;
+    }
+
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
@@ -52,24 +60,6 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
 
     next();
   } catch (error: any) {
-    if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ 
-        success: false,
-        message: 'Token expirado' 
-      });
-      return;
-    }
-    
-    if (error instanceof jwt.JsonWebTokenError) {
-      
-      res.status(401).json({ 
-        success: false,
-        message: 'Token inválido', 
-      });
-      return;
-    }
-
-    // Outros erros JWT
     res.status(500).json({ 
       success: false,
       message: 'Erro interno de autenticação' 
@@ -78,6 +68,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
 };
 
 export const adminMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+
   if (!req.user) {
     res.status(401).json({
       success: false,
@@ -85,6 +76,7 @@ export const adminMiddleware = (req: AuthenticatedRequest, res: Response, next: 
     });
     return;
   }
+
 
   if (req.user.tipo !== 'ADMIN') {
     res.status(403).json({
@@ -94,5 +86,7 @@ export const adminMiddleware = (req: AuthenticatedRequest, res: Response, next: 
     return;
   }
 
+
+  console.log("acessei o admin middleware")
   next();
 };
