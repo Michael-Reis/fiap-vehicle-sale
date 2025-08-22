@@ -296,18 +296,22 @@ describe('Database Connection Module', () => {
       await expect(initializeDatabase()).resolves.not.toThrow();
     });
 
-    it.skip('deve capturar e propagar erros de inicialização', async () => {
-      const mockConnectionWithoutDb = {
-        execute: jest.fn()
-          .mockRejectedValueOnce(new Error('Database does not exist'))
-          .mockRejectedValueOnce(new Error('Database initialization failed')),
+    it('deve capturar e propagar erros de inicialização', async () => {
+      // Reset todos os mocks para este teste específico
+      mockCreatePool.mockReset();
+      mockPool.execute.mockReset();
+      mockPool.end.mockReset();
+      
+      const mockConnectionWithError = {
+        execute: jest.fn().mockRejectedValue(new Error('Database creation failed')),
         end: jest.fn().mockResolvedValue(undefined),
         getConnection: jest.fn()
       };
       
-      mockCreatePool.mockReturnValueOnce(mockConnectionWithoutDb as any);
+      // Mock para que falhe na criação do database
+      mockCreatePool.mockReturnValue(mockConnectionWithError as any);
       
-      await expect(initializeDatabase()).rejects.toThrow('Database initialization failed');
+      await expect(initializeDatabase()).rejects.toThrow('Database creation failed');
       expect(console.error).toHaveBeenCalledWith('Erro ao inicializar banco de dados:', expect.any(Error));
     });
 
