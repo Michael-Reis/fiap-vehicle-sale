@@ -72,8 +72,9 @@ export class VeiculoController {
       if (precoMin) params.precoMin = parseFloat(precoMin as string);
       if (precoMax) params.precoMax = parseFloat(precoMax as string);
 
-      // Obter token do header de autorização
-      const token = req.headers.authorization?.replace('Bearer ', '');
+      // Extrair token do header Authorization
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
 
       const result = await this.veiculoService.listarVeiculosVendidos(params, token);
 
@@ -84,13 +85,14 @@ export class VeiculoController {
           message: 'Veículos vendidos listados com sucesso'
         });
       } else {
-        // Extrair código de status da mensagem de erro se disponível
-        const statusMatch = result.message?.match(/Erro (\d+):/);
+        // Extrair código de status da mensagem de erro se presente
+        const errorMessage = result.message || 'Erro ao listar veículos vendidos';
+        const statusMatch = errorMessage.match(/Erro (\d{3}):/);
         const statusCode = statusMatch ? parseInt(statusMatch[1]) : 400;
         
         res.status(statusCode).json({
           success: false,
-          message: result.message || 'Erro ao listar veículos vendidos'
+          message: errorMessage
         });
       }
     } catch (error: any) {
@@ -101,4 +103,6 @@ export class VeiculoController {
       });
     }
   }
+
+
 }

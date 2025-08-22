@@ -128,4 +128,62 @@ export class ExternalVeiculoService {
       ordem: 'ASC' // Do mais barato para o mais caro
     }, token);
   }
+
+  async buscarVeiculoPorId(id: string, token?: string): Promise<{ success: boolean; data?: Veiculo; message?: string }> {
+    try {
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response: AxiosResponse = await axios.get(
+        `${this.servicoPrincipalUrl}/api/veiculos/${id}`,
+        { headers }
+      );
+
+      if (response.data.success) {
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.data.message || 'Erro ao buscar veículo'
+        };
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar veículo por ID:', error.message);
+      
+      if (error.response?.status === 404) {
+        return {
+          success: false,
+          message: 'Veículo não encontrado'
+        };
+      }
+
+      if (error.response?.status === 401) {
+        return {
+          success: false,
+          message: 'Token de acesso inválido'
+        };
+      }
+
+      if (error.response?.status === 403) {
+        return {
+          success: false,
+          message: 'Acesso negado'
+        };
+      }
+
+      return {
+        success: false,
+        message: 'Erro interno do servidor'
+      };
+    }
+  }
 }

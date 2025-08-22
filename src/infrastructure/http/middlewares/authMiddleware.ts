@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
     userId: string;
     email: string;
     tipo: string;
+    cpf?: string;
   };
 }
 
@@ -55,7 +56,8 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
-      tipo: decoded.tipo
+      tipo: decoded.tipo,
+      cpf: decoded.cpf
     };
 
     next();
