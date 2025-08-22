@@ -2,6 +2,7 @@ import { VendaRepository } from '../repositories/VendaRepository';
 import { Venda, CriarVendaRequest, StatusVenda, MetodoPagamento } from '../entities/Venda';
 import { ExternalVeiculoService } from '../../infrastructure/services/ExternalVeiculoService';
 import { v4 as uuidv4 } from 'uuid';
+import { randomBytes } from 'crypto';
 
 export class VendaService {
   private veiculoService: ExternalVeiculoService;
@@ -164,8 +165,9 @@ export class VendaService {
   }
 
   private gerarCodigoPagamento(): string {
+    // Usando crypto.randomBytes para geração criptograficamente segura
     const timestamp = Date.now().toString();
-    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `PAG-${timestamp}-${randomPart}`;
+    const randomBytes8 = randomBytes(4).toString('hex').toUpperCase();
+    return `PAG-${timestamp}-${randomBytes8}`;
   }
 }

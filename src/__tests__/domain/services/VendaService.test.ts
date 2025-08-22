@@ -430,9 +430,22 @@ describe('VendaService', () => {
       const codigo1 = vendaService['gerarCodigoPagamento']();
       const codigo2 = vendaService['gerarCodigoPagamento']();
 
-      expect(codigo1).toMatch(/^PAG-\d+-[A-Z0-9]{6}$/);
-      expect(codigo2).toMatch(/^PAG-\d+-[A-Z0-9]{6}$/);
+      expect(codigo1).toMatch(/^PAG-\d+-[A-F0-9]{8}$/);
+      expect(codigo2).toMatch(/^PAG-\d+-[A-F0-9]{8}$/);
       expect(codigo1).not.toBe(codigo2);
+    });
+
+    it('deve gerar códigos de pagamento com alta entropia', () => {
+      const codigos = new Set();
+      
+      // Gerar 1000 códigos para verificar unicidade
+      for (let i = 0; i < 1000; i++) {
+        const codigo = vendaService['gerarCodigoPagamento']();
+        expect(codigos.has(codigo)).toBe(false); // Não deve haver duplicatas
+        codigos.add(codigo);
+      }
+      
+      expect(codigos.size).toBe(1000);
     });
   });
 });
