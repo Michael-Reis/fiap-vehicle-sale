@@ -138,64 +138,6 @@ describe('ExternalAuthenticationService', () => {
     });
   });
 
-  describe('validarToken', () => {
-    it('deve validar token com sucesso', async () => {
-      const mockResponse = {
-        data: {
-          user: {
-            userId: 'user_123',
-            email: 'joao@teste.com',
-            tipo: 'CLIENTE'
-          }
-        }
-      };
-
-      mockedAxios.get.mockResolvedValue(mockResponse);
-
-      const result = await authService.validarToken('valid-token');
-
-      expect(result.valid).toBe(true);
-      expect(result.user).toEqual(mockResponse.data.user);
-    });
-
-    it('deve retornar erro para token inválido', async () => {
-      const mockError = {
-        response: {
-          status: 401
-        }
-      };
-
-      mockedAxios.get.mockRejectedValue(mockError);
-
-      const result = await authService.validarToken('invalid-token');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Token inválido ou expirado');
-    });
-
-    it('deve retornar erro para problemas de rede', async () => {
-      mockedAxios.get.mockRejectedValue(new Error('Network Error'));
-
-      const result = await authService.validarToken('some-token');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Erro interno de validação');
-    });
-
-    it('deve retornar erro para resposta sem status', async () => {
-      const mockError = {
-        response: undefined
-      };
-
-      mockedAxios.get.mockRejectedValue(mockError);
-
-      const result = await authService.validarToken('some-token');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Erro interno de validação');
-    });
-  });
-
   describe('login - cenários adicionais', () => {
     it('deve retornar erro para problemas de rede', async () => {
       mockedAxios.post.mockRejectedValue(new Error('Network Error'));
@@ -391,30 +333,6 @@ describe('ExternalAuthenticationService', () => {
       const result = await authService.registrar(dadosUsuario);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Serviço de autenticação indisponível');
-    });
-
-    it('deve retornar erro para ECONNREFUSED na validação', async () => {
-      const errorWithCode = new Error('Connection refused');
-      (errorWithCode as any).code = 'ECONNREFUSED';
-      
-      mockedAxios.get.mockRejectedValue(errorWithCode);
-
-      const result = await authService.validarToken('some-token');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('Serviço de autenticação indisponível');
-    });
-
-    it('deve retornar erro para ENOTFOUND na validação', async () => {
-      const errorWithCode = new Error('Host not found');
-      (errorWithCode as any).code = 'ENOTFOUND';
-      
-      mockedAxios.get.mockRejectedValue(errorWithCode);
-
-      const result = await authService.validarToken('some-token');
-
-      expect(result.valid).toBe(false);
       expect(result.error).toBe('Serviço de autenticação indisponível');
     });
   });

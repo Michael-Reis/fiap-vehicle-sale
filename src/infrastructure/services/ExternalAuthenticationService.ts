@@ -3,8 +3,7 @@ import {
   AuthenticationService,
   LoginResult,
   RegistroUsuarioInput,
-  RegistroResult,
-  TokenValidationResult
+  RegistroResult
 } from '../../domain/services/AuthenticationService';
 
 export class ExternalAuthenticationService implements AuthenticationService {
@@ -96,48 +95,6 @@ export class ExternalAuthenticationService implements AuthenticationService {
       return {
         success: false,
         error: 'Erro interno de registro'
-      };
-    }
-  }
-
-  async validarToken(token: string): Promise<TokenValidationResult> {
-    try {
-      // Para validar o token, fazemos uma requisição para um endpoint protegido
-      const response: AxiosResponse = await axios.get(
-        `${this.servicoPrincipalUrl}/api/auth/me`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 5000
-        }
-      );
-
-      return {
-        valid: true,
-        user: response.data.user
-      };
-    } catch (error: any) {
-      console.error('Erro ao validar token:', error);
-
-      if (error.response && error.response.status === 401) {
-        return {
-          valid: false,
-          error: 'Token inválido ou expirado'
-        };
-      }
-
-      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        return {
-          valid: false,
-          error: 'Serviço de autenticação indisponível'
-        };
-      }
-
-      return {
-        valid: false,
-        error: 'Erro interno de validação'
       };
     }
   }

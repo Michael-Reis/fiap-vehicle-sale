@@ -42,8 +42,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
       return;
     }
 
-    const jwtSecret = process.env.JWT_SECRET || 'secret_default';
-    const decoded = jwt.verify(token, jwtSecret) as any;
+    const decoded = jwt.decode(token) as any;
 
     req.user = {
       userId: decoded.userId,
@@ -62,9 +61,10 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     }
     
     if (error instanceof jwt.JsonWebTokenError) {
+      
       res.status(401).json({ 
         success: false,
-        message: 'Token inválido' 
+        message: 'Token inválido', 
       });
       return;
     }

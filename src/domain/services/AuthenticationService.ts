@@ -1,7 +1,6 @@
 export interface AuthenticationService {
   login(email: string, senha: string): Promise<LoginResult>;
   registrar(dadosUsuario: RegistroUsuarioInput): Promise<RegistroResult>;
-  validarToken(token: string): Promise<TokenValidationResult>;
 }
 
 export interface LoginResult {
@@ -35,15 +34,5 @@ export interface RegistroResult {
     tipo: string;
   };
   message?: string;
-  error?: string;
-}
-
-export interface TokenValidationResult {
-  valid: boolean;
-  user?: {
-    userId: string;
-    email: string;
-    tipo: string;
-  };
   error?: string;
 }

@@ -210,42 +210,4 @@ describe('AuthController', () => {
       });
     });
   });
-
-  describe('me', () => {
-    it('deve retornar dados do usuário autenticado', async () => {
-      const mockUser = {
-        userId: 'user_123',
-        email: 'joao@teste.com',
-        tipo: 'CLIENTE'
-      };
-
-      const mockAuthRequest = {
-        ...mockRequest,
-        user: mockUser
-      };
-
-      await authController.me(mockAuthRequest as any, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        success: true,
-        user: mockUser
-      });
-    });
-
-    it('deve retornar erro 401 para usuário não autenticado', async () => {
-      const mockAuthRequest = {
-        ...mockRequest,
-        user: undefined
-      };
-
-      await authController.me(mockAuthRequest as any, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        success: false,
-        error: 'Usuário não autenticado'
-      });
-    });
-  });
 });

@@ -19,6 +19,12 @@ O serviço segue a **Arquitetura Hexagonal (Ports and Adapters)**, separando cla
 - ✅ Middleware de autenticação
 - ✅ Proteção de rotas
 
+### Consulta de Veículos
+- ✅ Listagem de veículos à venda (ordenada por preço crescente)
+- ✅ Listagem de veículos vendidos (ordenada por preço crescente - requer admin)
+- ✅ Filtros por marca, modelo, ano e preço
+- ✅ Integração com serviço principal via API
+
 ## 🔧 Tecnologias Utilizadas
 
 - **Node.js** + **TypeScript**
@@ -83,7 +89,21 @@ A documentação Swagger está disponível em: `http://localhost:3001/api-docs`
 |--------|----------|-----------|-------------|
 | POST | `/api/auth/login` | Fazer login | ❌ |
 | POST | `/api/auth/registrar` | Registrar cliente | ❌ |
-| GET | `/api/auth/me` | Dados do usuário | ✅ |
+
+#### Veículos
+
+| Método | Endpoint | Descrição | Autenticação |
+|--------|----------|-----------|-------------|
+| GET | `/api/veiculos/a-venda` | Listar veículos à venda | ❌ |
+| GET | `/api/veiculos/vendidos` | Listar veículos vendidos | ✅ (Admin) |
+
+**Filtros disponíveis para ambas as rotas:**
+- `marca` - Filtrar por marca
+- `modelo` - Filtrar por modelo
+- `anoMin` - Ano mínimo
+- `anoMax` - Ano máximo
+- `precoMin` - Preço mínimo
+- `precoMax` - Preço máximo
 
 #### Health Check
 
@@ -133,7 +153,6 @@ O serviço de vendas se comunica com o serviço principal através de:
 
 1. **Login**: `POST /api/auth/login`
 2. **Registro**: `POST /api/auth/registrar-cliente`
-3. **Validação**: `GET /api/auth/me` (futuro)
 
 ### Fluxo de Autenticação
 

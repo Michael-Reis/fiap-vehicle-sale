@@ -73,27 +73,4 @@ export class AuthController {
       });
     }
   }
-
-  async me(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: 'Usuário não autenticado'
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        user: req.user
-      });
-    } catch (error: any) {
-      console.error('Erro ao obter dados do usuário:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Erro interno do servidor'
-      });
-    }
-  }
 }
