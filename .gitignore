@@ -1,0 +1,38 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Build
+/dist
+/build
+
+# Environment
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+
+# XAMPP
+xampp/
+
+# Database
+*.sqlite
+*.db
+
+# Swagger
+swagger-output.json
