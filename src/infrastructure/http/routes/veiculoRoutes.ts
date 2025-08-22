@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { VeiculoController } from '../controllers/VeiculoController';
-import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware';
 
 const router = Router();
 const veiculoController = new VeiculoController();
@@ -125,69 +124,5 @@ const veiculoController = new VeiculoController();
  *         description: Erro interno do servidor
  */
 router.get('/a-venda', veiculoController.listarVeiculosAVenda.bind(veiculoController));
-
-/**
- * @swagger
- * /api/veiculos/vendidos:
- *   get:
- *     summary: Listar veículos vendidos
- *     description: Lista todos os veículos vendidos, ordenados por preço crescente. Requer autenticação de administrador.
- *     tags: [Veículos]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: marca
- *         schema:
- *           type: string
- *         description: Filtrar por marca
- *         example: Toyota
- *       - in: query
- *         name: modelo
- *         schema:
- *           type: string
- *         description: Filtrar por modelo
- *         example: Corolla
- *       - in: query
- *         name: anoMin
- *         schema:
- *           type: integer
- *         description: Ano mínimo
- *         example: 2020
- *       - in: query
- *         name: anoMax
- *         schema:
- *           type: integer
- *         description: Ano máximo
- *         example: 2024
- *       - in: query
- *         name: precoMin
- *         schema:
- *           type: number
- *         description: Preço mínimo
- *         example: 50000
- *       - in: query
- *         name: precoMax
- *         schema:
- *           type: number
- *         description: Preço máximo
- *         example: 100000
- *     responses:
- *       200:
- *         description: Veículos vendidos listados com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/VeiculosResponse'
- *       401:
- *         description: Token de acesso inválido ou não fornecido
- *       403:
- *         description: Acesso negado - apenas administradores
- *       400:
- *         description: Erro na solicitação
- *       500:
- *         description: Erro interno do servidor
- */
-router.get('/vendidos', authMiddleware, adminMiddleware, veiculoController.listarVeiculosVendidos.bind(veiculoController));
 
 export default router;

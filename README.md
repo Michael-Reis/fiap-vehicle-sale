@@ -1,13 +1,13 @@
 # Serviço de Vendas - Gestão de Transações de Veículos
 
-Este é o serviço de vendas que integra com o serviço principal para autenticação e gerenciamento de transações de veículos.
+Este é o serviço de vendas que integra com o serviço principal para autenticação e gerenciamento de transações de veículos, incluindo processamento de pagamentos e notificações via webhook.
 
 ## 🏗️ Arquitetura
 
 O serviço segue a **Arquitetura Hexagonal (Ports and Adapters)**, separando claramente as responsabilidades:
 
 - **Domain**: Entidades e regras de negócio
-- **Application**: Casos de uso e orquestração
+- **Application**: Casos de uso e orquestração  
 - **Infrastructure**: Implementações técnicas (HTTP, Database, External Services)
 
 ## 🚀 Funcionalidades Implementadas
@@ -21,24 +21,41 @@ O serviço segue a **Arquitetura Hexagonal (Ports and Adapters)**, separando cla
 
 ### Consulta de Veículos
 - ✅ Listagem de veículos à venda (ordenada por preço crescente)
-- ✅ Listagem de veículos vendidos (ordenada por preço crescente - requer admin)
 - ✅ Filtros por marca, modelo, ano e preço
 - ✅ Integração com serviço principal via API
+
+### Gestão de Vendas 🆕
+- ✅ Criação de pedidos de venda
+- ✅ Processamento de pagamentos via webhook
+- ✅ Banco de dados MySQL para persistência
+- ✅ Sistema de status (pendente, processando, aprovado, rejeitado, cancelado)
+- ✅ Validação de CPF e dados de venda
+- ✅ Controle de vendas duplicadas por veículo
+
+### Notificações Webhook 🆕
+- ✅ CronJob automático para processar webhooks pendentes
+- ✅ Notificação para serviço externo quando venda é aprovada
+- ✅ Sistema de retry com limite de tentativas
+- ✅ Log completo de tentativas de webhook
+- ✅ Processamento em background
 
 ## 🔧 Tecnologias Utilizadas
 
 - **Node.js** + **TypeScript**
 - **Express.js** - Framework web
-- **Axios** - Cliente HTTP para comunicação com serviço principal
+- **MySQL2** - Banco de dados e driver
+- **Axios** - Cliente HTTP para comunicação com serviços externos
 - **JWT** - Autenticação
 - **Jest** - Framework de testes
 - **Swagger** - Documentação da API
-- **MySQL** - Banco de dados (futuro)
+- **UUID** - Geração de identificadores únicos
+- **Express Validator** - Validação de dados
 
 ## 📋 Pré-requisitos
 
 - Node.js 18+
 - NPM ou Yarn
+- MySQL 5.7+ ou 8.0+
 - Serviço principal rodando na porta 3000
 
 ## 🛠️ Instalação e Configuração
@@ -50,13 +67,37 @@ cd servico-vendas
 npm install
 ```
 
-### 2. Configure variáveis de ambiente
+### 2. Configure o banco de dados MySQL
 
-Copie o arquivo `.env` e ajuste as configurações:
+Execute o script SQL para criar o banco e tabelas:
+
+```bash
+# Entre no MySQL
+mysql -u root -p
+
+# Execute o script de setup
+source database/setup.sql
+```
+
+Ou execute manualmente as queries do arquivo `database/setup.sql`.
+
+### 3. Configure variáveis de ambiente
+
+Copie o arquivo `.env.example` para `.env` e ajuste as configurações:
 
 ```env
-# Configurações do Servidor
-PORT=3001
+# Configurações do Banco de Dados MySQL
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=sua_senha_mysql
+DB_NAME=servico_vendas
+
+# URL do webhook externo para notificar vendas
+EXTERNAL_WEBHOOK_URL=http://localhost:3001/api/webhook/pagamento
+
+# Configurações do servidor
+PORT=3000
 NODE_ENV=development
 
 # URL do Serviço Principal
@@ -64,9 +105,16 @@ SERVICO_PRINCIPAL_URL=http://localhost:3000
 
 # Configurações de Autenticação
 JWT_SECRET=sua_chave_secreta_aqui
+
+# Configurações do cronjob
+CRONJOB_INTERVAL_SECONDS=10
+
+# Configurações de timeout para webhooks
+WEBHOOK_TIMEOUT_MS=5000
+WEBHOOK_MAX_TENTATIVAS=5
 ```
 
-### 3. Execute o serviço
+### 4. Execute o serviço
 
 ```bash
 # Desenvolvimento
@@ -76,6 +124,11 @@ npm run dev
 npm run build
 npm start
 ```
+
+O serviço irá:
+- ✅ Conectar e inicializar o banco de dados automaticamente
+- ✅ Iniciar o CronJob para processar webhooks pendentes
+- ✅ Disponibilizar todas as APIs de vendas
 
 ## 📖 Documentação da API
 
@@ -95,9 +148,16 @@ A documentação Swagger está disponível em: `http://localhost:3001/api-docs`
 | Método | Endpoint | Descrição | Autenticação |
 |--------|----------|-----------|-------------|
 | GET | `/api/veiculos/a-venda` | Listar veículos à venda | ❌ |
-| GET | `/api/veiculos/vendidos` | Listar veículos vendidos | ✅ (Admin) |
 
-**Filtros disponíveis para ambas as rotas:**
+#### Vendas 🆕
+
+| Método | Endpoint | Descrição | Autenticação |
+|--------|----------|-----------|-------------|
+| POST | `/api/vendas` | Criar nova venda | ❌ |
+| GET | `/api/vendas/{id}` | Buscar venda por ID | ❌ |
+| GET | `/api/vendas` | Listar vendas (admin vê todas, usuário vê apenas suas vendas) | ✅ |
+
+**Filtros disponíveis para veículos:**
 - `marca` - Filtrar por marca
 - `modelo` - Filtrar por modelo
 - `anoMin` - Ano mínimo
@@ -105,11 +165,64 @@ A documentação Swagger está disponível em: `http://localhost:3001/api-docs`
 - `precoMin` - Preço mínimo
 - `precoMax` - Preço máximo
 
+**Filtros disponíveis para vendas:**
+- `cpf` - CPF do comprador
+- `veiculoId` - ID do veículo
+- `limite` - Número máximo de registros (1-100)
+- `offset` - Número de registros para pular
+
 #### Health Check
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | `/health` | Status do serviço |
+
+### Exemplos de Uso das APIs de Venda 🆕
+
+#### 1. Criar uma nova venda
+
+```bash
+curl -X POST http://localhost:3000/api/vendas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "veiculoId": "1",
+    "cpfComprador": "12345678901",
+    "valorPago": 85000,
+    "metodoPagamento": "cartao_credito"
+  }'
+```
+
+#### 2. Buscar venda por ID
+
+```bash
+curl http://localhost:3000/api/vendas/123e4567-e89b-12d3-a456-426614174000
+```
+
+#### 3. Listar vendas com filtros
+
+```bash
+# Todas as vendas
+curl http://localhost:3000/api/vendas
+
+# Vendas por CPF
+curl http://localhost:3000/api/vendas?cpf=12345678901
+
+# Vendas por veículo
+curl http://localhost:3000/api/vendas?veiculoId=1
+
+# Com paginação
+curl http://localhost:3000/api/vendas?limite=10&offset=20
+```
+
+#### 4. Processar webhook de pagamento
+
+### Fluxo Completo de Venda
+
+1. **Cliente cria venda** → Status: `pendente`
+2. **Sistema de pagamento processa** → Webhook recebido
+3. **Status atualizado** → `aprovado` ou `rejeitado`
+4. **CronJob detecta venda aprovada** → Notifica serviço externo
+5. **Serviço externo remove disponibilidade** → Venda concluída
 
 ## 🧪 Testes
 

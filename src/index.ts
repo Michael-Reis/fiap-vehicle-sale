@@ -8,6 +8,9 @@ import swaggerUi from 'swagger-ui-express';
 
 import authRoutes from './infrastructure/http/routes/authRoutes';
 import veiculoRoutes from './infrastructure/http/routes/veiculoRoutes';
+import vendaRoutes from './infrastructure/http/routes/vendaRoutes';
+import { initializeDatabase } from './infrastructure/database/connection';
+import { CronJobService } from './infrastructure/jobs/CronJobService';
 
 // Configurar variáveis de ambiente
 dotenv.config();
@@ -71,7 +74,10 @@ const swaggerOptions = {
       }
     }
   },
-  apis: ['./src/infrastructure/http/routes/*.ts']
+  apis: [
+    './src/infrastructure/http/routes/*.ts',
+    './src/infrastructure/http/controllers/*.ts'
+  ]
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
@@ -90,6 +96,7 @@ app.get('/health', (req, res) => {
 // Rotas da API
 app.use('/api/auth', authRoutes);
 app.use('/api/veiculos', veiculoRoutes);
+app.use('/api', vendaRoutes);
 
 // Middleware de tratamento de rotas não encontradas
 app.use('*', (req, res) => {
@@ -110,11 +117,44 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Serviço de vendas rodando na porta ${PORT}`);
-  console.log(`📚 Documentação disponível em http://localhost:${PORT}/api-docs`);
-  console.log(`🏥 Health check disponível em http://localhost:${PORT}/health`);
-});
+// Inicializar aplicação
+async function startServer() {
+  try {
+    // Inicializar banco de dados
+    console.log('🔧 Inicializando banco de dados...');
+    await initializeDatabase();
+    console.log('✅ Banco de dados inicializado com sucesso');
+
+    // Inicializar CronJob para processar webhooks
+    const cronJob = new CronJobService();
+    const intervalSeconds = parseInt(process.env.CRONJOB_INTERVAL_SECONDS || '10');
+    cronJob.start(intervalSeconds);
+    console.log(`⏰ CronJob iniciado com intervalo de ${intervalSeconds} segundo(s)`);
+
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      console.log(`🚀 Serviço de vendas rodando na porta ${PORT}`);
+      console.log(`📚 Documentação disponível em http://localhost:${PORT}/api-docs`);
+      console.log(`🏥 Health check disponível em http://localhost:${PORT}/health`);
+      console.log(`💰 API de vendas disponível em http://localhost:${PORT}/api/vendas`);
+      console.log(`🔗 Webhook de pagamento disponível em http://localhost:${PORT}/api/webhook/pagamento`);
+    });
+
+    // Tratamento graceful de shutdown
+    process.on('SIGINT', () => {
+      console.log('\n🛑 Recebido sinal de shutdown...');
+      cronJob.stop();
+      console.log('✅ CronJob parado');
+      process.exit(0);
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao inicializar servidor:', error);
+    process.exit(1);
+  }
+}
+
+// Iniciar a aplicação
+startServer();
 
 export default app;
