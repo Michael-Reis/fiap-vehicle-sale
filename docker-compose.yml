@@ -49,6 +49,7 @@ services:
         condition: service_healthy
     networks:
       - vendas-network
+      - shared-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health", "||", "exit", "1"]
@@ -63,3 +64,6 @@ volumes:
 networks:
   vendas-network:
     driver: bridge
+  shared-network:
+    external: true
+    name: carros-fiap-network
