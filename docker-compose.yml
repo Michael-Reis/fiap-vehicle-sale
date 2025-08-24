@@ -1,4 +1,24 @@
 services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack-vendas
+    ports:
+      - "4567:4566"
+      - "4570-4599:4570-4599"
+    environment:
+      - SERVICES=ecs,ec2,iam,logs,ecr
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "localstack_data:/tmp/localstack"
+    networks:
+      - vendas-network
+      - shared-network
+    restart: unless-stopped
+
   mysql:
     image: mysql:8.0
     container_name: servico-vendas-mysql
@@ -44,9 +64,16 @@ services:
       - RATE_LIMIT_MAX_REQUESTS=100
       - CRONJOB_INTERVAL_SECONDS=10
       - EXTERNAL_WEBHOOK_URL=http://localhost:3000/api/webhook/pagamento
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - ECS_CLUSTER_NAME=servico-vendas-cluster
     depends_on:
       mysql:
         condition: service_healthy
+      localstack:
+        condition: service_started
     networks:
       - vendas-network
       - shared-network
@@ -60,6 +87,8 @@ services:
 
 volumes:
   mysql_data:
+  localstack_data:
+    driver: local
 
 networks:
   vendas-network:
