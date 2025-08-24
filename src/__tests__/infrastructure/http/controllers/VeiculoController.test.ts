@@ -215,6 +215,66 @@ describe('VeiculoController', () => {
         precoMax: NaN
       });
     });
+
+    it('deve processar parâmetro de ordem ASC corretamente', async () => {
+      mockRequest.query = {
+        marca: 'Toyota',
+        ordem: 'ASC'
+      };
+
+      mockVeiculoService.listarVeiculosAVenda.mockResolvedValue({
+        success: true,
+        data: [],
+        message: 'Sucesso'
+      });
+
+      await veiculoController.listarVeiculosAVenda(mockRequest as Request, mockResponse as Response);
+
+      expect(mockVeiculoService.listarVeiculosAVenda).toHaveBeenCalledWith({
+        marca: 'Toyota',
+        ordem: 'ASC'
+      });
+    });
+
+    it('deve processar parâmetro de ordem DESC corretamente', async () => {
+      mockRequest.query = {
+        marca: 'Honda',
+        ordem: 'DESC'
+      };
+
+      mockVeiculoService.listarVeiculosAVenda.mockResolvedValue({
+        success: true,
+        data: [],
+        message: 'Sucesso'
+      });
+
+      await veiculoController.listarVeiculosAVenda(mockRequest as Request, mockResponse as Response);
+
+      expect(mockVeiculoService.listarVeiculosAVenda).toHaveBeenCalledWith({
+        marca: 'Honda',
+        ordem: 'DESC'
+      });
+    });
+
+    it('deve ignorar parâmetro de ordem inválido', async () => {
+      mockRequest.query = {
+        marca: 'Ford',
+        ordem: 'INVALID'
+      };
+
+      mockVeiculoService.listarVeiculosAVenda.mockResolvedValue({
+        success: true,
+        data: [],
+        message: 'Sucesso'
+      });
+
+      await veiculoController.listarVeiculosAVenda(mockRequest as Request, mockResponse as Response);
+
+      expect(mockVeiculoService.listarVeiculosAVenda).toHaveBeenCalledWith({
+        marca: 'Ford'
+        // Nota: ordem inválida é ignorada, então não deve aparecer nos parâmetros
+      });
+    });
   });
 
   describe('listarVeiculosVendidos', () => {

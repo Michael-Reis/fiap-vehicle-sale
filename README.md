@@ -20,7 +20,8 @@ O serviço segue a **Arquitetura Hexagonal (Ports and Adapters)**, separando cla
 - ✅ Proteção de rotas
 
 ### Consulta de Veículos
-- ✅ Listagem de veículos à venda (ordenada por preço crescente)
+- ✅ Listagem de veículos à venda com ordenação por preço
+- ✅ Ordenação ASC (mais barato para mais caro) e DESC (mais caro para mais barato)
 - ✅ Filtros por marca, modelo, ano e preço
 - ✅ Integração com serviço principal via API
 
@@ -147,7 +148,7 @@ A documentação Swagger está disponível em: `http://localhost:3001/api-docs`
 
 | Método | Endpoint | Descrição | Autenticação |
 |--------|----------|-----------|-------------|
-| GET | `/api/veiculos/a-venda` | Listar veículos à venda | ❌ |
+| GET | `/api/veiculos/a-venda` | Listar veículos à venda com ordenação por preço | ❌ |
 
 #### Vendas 🆕
 
@@ -164,6 +165,7 @@ A documentação Swagger está disponível em: `http://localhost:3001/api-docs`
 - `anoMax` - Ano máximo
 - `precoMin` - Preço mínimo
 - `precoMax` - Preço máximo
+- `ordem` - Ordenação por preço (`ASC` = mais barato para mais caro, `DESC` = mais caro para mais barato)
 
 **Filtros disponíveis para vendas:**
 - `cpf` - CPF do comprador
@@ -176,6 +178,35 @@ A documentação Swagger está disponível em: `http://localhost:3001/api-docs`
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | `/health` | Status do serviço |
+
+### Exemplos de Uso
+
+#### Consultar Veículos à Venda
+
+##### Listar todos os veículos à venda (ordenado por preço crescente - padrão)
+```bash
+curl http://localhost:3001/api/veiculos/a-venda
+```
+
+##### Listar veículos ordenados do mais caro para o mais barato
+```bash
+curl http://localhost:3001/api/veiculos/a-venda?ordem=DESC
+```
+
+##### Filtrar por marca e ordenar por preço crescente
+```bash
+curl "http://localhost:3001/api/veiculos/a-venda?marca=Toyota&ordem=ASC"
+```
+
+##### Filtrar por faixa de preço e ordenar do mais caro para o mais barato
+```bash
+curl "http://localhost:3001/api/veiculos/a-venda?precoMin=50000&precoMax=100000&ordem=DESC"
+```
+
+##### Filtro completo com todos os parâmetros
+```bash
+curl "http://localhost:3001/api/veiculos/a-venda?marca=Honda&modelo=Civic&anoMin=2020&anoMax=2024&precoMin=60000&precoMax=120000&ordem=ASC"
+```
 
 ### Exemplos de Uso das APIs de Venda 🆕
 

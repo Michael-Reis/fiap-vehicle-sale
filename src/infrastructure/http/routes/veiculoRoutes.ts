@@ -72,7 +72,7 @@ const veiculoController = new VeiculoController();
  * /api/veiculos/a-venda:
  *   get:
  *     summary: Listar veículos à venda
- *     description: Lista todos os veículos disponíveis para venda, ordenados por preço crescente
+ *     description: Lista todos os veículos disponíveis para venda com opções de filtro e ordenação por preço
  *     tags: [Veículos]
  *     parameters:
  *       - in: query
@@ -111,6 +111,13 @@ const veiculoController = new VeiculoController();
  *           type: number
  *         description: Preço máximo
  *         example: 100000
+ *       - in: query
+ *         name: ordem
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *         description: Ordenação por preço (ASC = mais barato para mais caro, DESC = mais caro para mais barato)
+ *         example: ASC
  *     responses:
  *       200:
  *         description: Veículos à venda listados com sucesso
