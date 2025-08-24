@@ -59,7 +59,61 @@ O serviço segue a **Arquitetura Hexagonal (Ports and Adapters)**, separando cla
 - MySQL 5.7+ ou 8.0+
 - Serviço principal rodando na porta 3000
 
-## 🛠️ Instalação e Configuração
+**OU para execução em containers:**
+
+- Docker
+- Docker Compose
+
+## � Execução com Docker (Recomendado)
+
+A forma mais simples de executar a aplicação é usando Docker. O docker-compose inclui o MySQL e configura toda a infraestrutura automaticamente.
+
+### Execução Rápida
+
+```bash
+# Clone o repositório
+git clone <url-do-repositorio>
+cd servico-vendas
+
+# Execute o script de inicialização (Linux/Mac)
+chmod +x start.sh
+./start.sh
+
+# OU no Windows PowerShell
+.\start.ps1
+
+# OU manualmente
+docker-compose up --build -d
+```
+
+### Comandos Docker Úteis
+
+```bash
+# Parar todos os containers
+docker-compose down
+
+# Ver logs em tempo real
+docker-compose logs -f
+
+# Ver logs específicos do serviço
+docker-compose logs -f servico-vendas
+
+# Rebuildar e reiniciar
+docker-compose up --build -d
+
+# Limpar tudo (containers, volumes e networks)
+docker-compose down -v
+docker system prune -f
+```
+
+### Acessos após inicialização
+
+- **API**: http://localhost:3001
+- **Documentação Swagger**: http://localhost:3001/api-docs
+- **Health Check**: http://localhost:3001/health
+- **MySQL**: localhost:3307 (usuário: root, senha: rootpassword)
+
+## 🛠️ Instalação Manual (Sem Docker)
 
 ### 1. Clone e instale dependências
 
