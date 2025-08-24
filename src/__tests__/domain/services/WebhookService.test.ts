@@ -29,11 +29,11 @@ describe('WebhookService', () => {
   };
 
   beforeEach(() => {
+    // Mock do environment - deve ser configurado antes da criação da instância
+    process.env.EXTERNAL_WEBHOOK_URL = 'http://localhost:3000/api/webhook/pagamento';
+    
     webhookService = new WebhookService();
     jest.clearAllMocks();
-    
-    // Mock do environment
-    process.env.EXTERNAL_WEBHOOK_URL = 'http://localhost:3000/api/webhook/pagamento';
   });
 
   describe('notificarVendaAprovada', () => {
