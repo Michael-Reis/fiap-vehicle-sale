@@ -3,7 +3,7 @@ import { ExternalVeiculoService, ListarVeiculosParams } from '../../services/Ext
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
 export class VeiculoController {
-  private veiculoService: ExternalVeiculoService;
+  private readonly veiculoService: ExternalVeiculoService;
 
   constructor() {
     this.veiculoService = new ExternalVeiculoService();
@@ -17,7 +17,8 @@ export class VeiculoController {
         anoMin,
         anoMax,
         precoMin,
-        precoMax
+        precoMax,
+        ordem
       } = req.query;
 
       const params: Omit<ListarVeiculosParams, 'status'> = {};
@@ -28,6 +29,11 @@ export class VeiculoController {
       if (anoMax) params.anoMax = parseInt(anoMax as string);
       if (precoMin) params.precoMin = parseFloat(precoMin as string);
       if (precoMax) params.precoMax = parseFloat(precoMax as string);
+      
+      // Validar e definir ordem (ASC = mais barato para mais caro, DESC = mais caro para mais barato)
+      if (ordem && (ordem === 'ASC' || ordem === 'DESC')) {
+        params.ordem = ordem;
+      }
 
       const result = await this.veiculoService.listarVeiculosAVenda(params);
 
@@ -87,7 +93,8 @@ export class VeiculoController {
       } else {
         // Extrair código de status da mensagem de erro se presente
         const errorMessage = result.message || 'Erro ao listar veículos vendidos';
-        const statusMatch = errorMessage.match(/Erro (\d{3}):/);
+        const statusRegex = /Erro (\d{3}):/;
+        const statusMatch = statusRegex.exec(errorMessage);
         const statusCode = statusMatch ? parseInt(statusMatch[1]) : 400;
         
         res.status(statusCode).json({

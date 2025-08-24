@@ -64,7 +64,9 @@ export class ExternalVeiculoService {
       if (params.ordem) queryParams.append('ordem', params.ordem);
       if (params.status) queryParams.append('status', params.status);
 
-      const url = `${this.servicoPrincipalUrl}/api/veiculos${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const queryString = queryParams.toString();
+      const urlSuffix = queryString ? '?' + queryString : '';
+      const url = this.servicoPrincipalUrl + '/api/veiculos' + urlSuffix;
       
       console.log('Fazendo requisição para:', url);
       console.log('Headers enviados:', headers);
@@ -117,7 +119,7 @@ export class ExternalVeiculoService {
     return this.listarVeiculos({
       ...params,
       status: 'A_VENDA',
-      ordem: 'ASC' // Do mais barato para o mais caro
+      ordem: params?.ordem || 'ASC' // Default: do mais barato para o mais caro
     });
   }
 
