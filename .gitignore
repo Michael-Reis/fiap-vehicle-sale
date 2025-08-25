@@ -36,3 +36,20 @@ xampp/
 
 # Swagger
 swagger-output.json
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+*.tfstate.*
+.terraform/providers/
+.terraform/modules/
+
+# AWS
+.aws/
+
+# Coverage
+coverage/
+*.lcov
