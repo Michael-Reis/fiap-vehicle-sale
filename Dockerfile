@@ -16,6 +16,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Set environment to production
+ENV NODE_ENV=production
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
