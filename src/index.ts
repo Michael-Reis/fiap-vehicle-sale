@@ -71,7 +71,7 @@ const swaggerOptions = {
     info: {
       title: 'Serviço de Vendas - API',
       version: '1.0.0',
-      description: 'API para gerenciamento de vendas de veículos s2',
+      description: 'API para gerenciamento de vendas de veículos',
       contact: {
         name: 'FIAP Student',
         email: 'student@fiap.com.br'
