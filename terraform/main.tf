@@ -52,6 +52,12 @@ variable "servico_principal_url" {
   default     = "http://fiap-vehicle-management-alb-1408414491.us-east-1.elb.amazonaws.com"
 }
 
+variable "external_webhook_url" {
+  description = "URL do webhook externo para notificar vendas aprovadas"
+  type        = string
+  default     = ""  # Se vazio, será construído baseado no servico_principal_url
+}
+
 # Data sources
 data "aws_availability_zones" "available" {
   state = "available"
@@ -437,6 +443,10 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "SERVICO_PRINCIPAL_URL"
           value = var.servico_principal_url
+        },
+        {
+          name  = "EXTERNAL_WEBHOOK_URL"
+          value = var.external_webhook_url != "" ? var.external_webhook_url : "${var.servico_principal_url}/api/webhook/pagamento"
         },
         {
           name  = "JWT_SECRET"
