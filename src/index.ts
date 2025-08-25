@@ -17,9 +17,28 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const BASE_URL = process.env.BASE_URL || (process.env.NODE_ENV === 'production' 
+  ? 'http://fiap-vehicle-sales-alb-544721435.us-east-1.elb.amazonaws.com'
+  : `http://localhost:${PORT}`);
 
 // Middleware de segurança
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:", "http:", "http://fiap-vehicle-management-alb-1408414491.us-east-1.elb.amazonaws.com", "http://fiap-vehicle-sales-alb-544721435.us-east-1.elb.amazonaws.com"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'"],
+      upgradeInsecureRequests: null,
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 
 // Middleware de CORS
 app.use(cors({
@@ -60,8 +79,10 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${PORT}`,
-        description: 'Servidor de desenvolvimento'
+        url: BASE_URL,
+        description: process.env.NODE_ENV === 'production' 
+          ? 'Servidor de produção (AWS)'
+          : 'Servidor de desenvolvimento'
       }
     ],
     components: {
