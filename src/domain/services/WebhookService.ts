@@ -8,7 +8,9 @@ export class WebhookService {
   private readonly timeoutMs: number = 5000;
 
   constructor() {
-    this.webhookUrl = process.env.EXTERNAL_WEBHOOK_URL || 'http://localhost:3001/api/webhook/pagamento';
+    // Se EXTERNAL_WEBHOOK_URL não estiver definida, usa o SERVICO_PRINCIPAL_URL como base
+    const servicoPrincipalUrl = process.env.SERVICO_PRINCIPAL_URL || 'http://localhost:3000';
+    this.webhookUrl = process.env.EXTERNAL_WEBHOOK_URL || `${servicoPrincipalUrl}/api/webhook/pagamento`;
   }
 
   async notificarVendaAprovada(venda: Venda): Promise<boolean> {

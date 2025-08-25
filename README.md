@@ -149,7 +149,8 @@ DB_PASSWORD=sua_senha_mysql
 DB_NAME=servico_vendas
 
 # URL do webhook externo para notificar vendas
-EXTERNAL_WEBHOOK_URL=http://localhost:3001/api/webhook/pagamento
+# Se não definida, será construída automaticamente baseada no SERVICO_PRINCIPAL_URL
+# EXTERNAL_WEBHOOK_URL=http://localhost:3000/api/webhook/pagamento
 
 # Configurações do servidor
 PORT=3000

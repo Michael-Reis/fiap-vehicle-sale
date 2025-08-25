@@ -29,8 +29,12 @@ describe('WebhookService', () => {
   };
 
   beforeEach(() => {
-    // Mock do environment - deve ser configurado antes da criação da instância
-    process.env.EXTERNAL_WEBHOOK_URL = 'http://localhost:3000/api/webhook/pagamento';
+    // Limpar variáveis de ambiente antes de cada teste
+    delete process.env.EXTERNAL_WEBHOOK_URL;
+    delete process.env.SERVICO_PRINCIPAL_URL;
+    
+    // Mock do environment - configurando apenas o SERVICO_PRINCIPAL_URL
+    process.env.SERVICO_PRINCIPAL_URL = 'http://localhost:3000';
     
     webhookService = new WebhookService();
     jest.clearAllMocks();
@@ -252,6 +256,60 @@ describe('WebhookService', () => {
       expect(mockAxios.post).toHaveBeenCalled();
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('Configuração da URL do Webhook', () => {
+    afterEach(() => {
+      delete process.env.EXTERNAL_WEBHOOK_URL;
+      delete process.env.SERVICO_PRINCIPAL_URL;
+    });
+
+    it('deve usar EXTERNAL_WEBHOOK_URL quando definida', () => {
+      process.env.EXTERNAL_WEBHOOK_URL = 'http://external-service:8080/webhook';
+      process.env.SERVICO_PRINCIPAL_URL = 'http://principal:3000';
+      
+      const service = new WebhookService();
+      
+      // Como não temos acesso direto à URL, testamos através de uma chamada
+      expect(mockAxios.post).not.toHaveBeenCalled(); // Reset antes do teste
+      
+      service.notificarVendaAprovada(vendaMock);
+      
+      // A URL externa definida deve ser usada
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        'http://external-service:8080/webhook',
+        expect.any(Object),
+        expect.any(Object)
+      );
+    });
+
+    it('deve construir URL baseada em SERVICO_PRINCIPAL_URL quando EXTERNAL_WEBHOOK_URL não estiver definida', () => {
+      process.env.SERVICO_PRINCIPAL_URL = 'http://principal:3000';
+      
+      const service = new WebhookService();
+      
+      service.notificarVendaAprovada(vendaMock);
+      
+      // URL deve ser construída a partir do serviço principal
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        'http://principal:3000/api/webhook/pagamento',
+        expect.any(Object),
+        expect.any(Object)
+      );
+    });
+
+    it('deve usar localhost:3000 como fallback quando nenhuma variável estiver definida', () => {
+      const service = new WebhookService();
+      
+      service.notificarVendaAprovada(vendaMock);
+      
+      // URL padrão deve ser usada
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/webhook/pagamento',
+        expect.any(Object),
+        expect.any(Object)
+      );
     });
   });
 });
