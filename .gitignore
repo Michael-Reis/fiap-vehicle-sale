@@ -50,6 +50,6 @@ terraform.tfstate.backup
 # AWS
 .aws/
 
-# Coverage
+# Coverage (ignorar HTML reports, mas manter lcov.info para SonarQube)
 coverage/
-*.lcov
+!coverage/lcov.info
